@@ -1,8 +1,10 @@
 package ch.zhaw.gpi.twitterreview.delegates;
 
+import ch.zhaw.gpi.twitterreview.services.EmailService;
 import javax.inject.Named;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Implementation des Send Tasks "Mitarbeiter benachrichtigen"
@@ -12,12 +14,16 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 @Named("notifyEmployeeAdapter")
 public class NotifyEmployeeDelegate implements JavaDelegate{
 
+    // Verdrahten des MailServices
+    @Autowired
+    private EmailService emailService;
+    
     /**
-     * Mockt das Senden einer Benachrichtigung per Mail
+     * Sendet eine Benachrichtigung per Mail
      * 
      * 1. Die Prozessvariablen auslesen
      * 2. Die E-Mail-Nachricht zusammenstellen
-     * 3. Die E-Mail in der Konsole ausgeben
+     * 3. Mail über Mailservice versenden
      * 
      * @param de        Objekt, welches die Verknüpfung zur Process Engine und aktuellen Execution enthält
      * @throws Exception
@@ -48,10 +54,13 @@ public class NotifyEmployeeDelegate implements JavaDelegate{
                 mailHauptteil + "\n\n" + "Deine Kommunikationsabteilung";
         
         // Mail in Konsole ausgeben
-        System.out.println("########### BEGIN MAIL ##########################");
-        System.out.println("############################### Mail-Empfänger: " + email);
-        System.out.println(mailBody);
-        System.out.println("########### END MAIL ############################");        
+        //System.out.println("########### BEGIN MAIL ##########################");
+        //System.out.println("############################### Mail-Empfänger: " + email);
+        //System.out.println(mailBody);
+        //System.out.println("########### END MAIL ############################");  
+        
+        // Mail über Mailservice versenden
+        emailService.sendSimpleMail(email, "Neuigkeiten zu Ihrer Tweet-Anfrage", mailBody); 
     }
     
 }
