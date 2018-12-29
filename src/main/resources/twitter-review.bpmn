@@ -13,8 +13,8 @@
       <bpmn:lane id="Lane_1iir6w0" name="Kommunikationsabteilung">
         <bpmn:flowNodeRef>ExclusiveGateway_1qa6x80</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>TweetAnfragePruefen</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>MitarbeiterKuerzelExtrahieren</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>DreiTageAbgelaufenKommunikationsabteilung</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>BenutzerInformationenAuslesen</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="Lane_1d0re29" name="Automatisch">
         <bpmn:flowNodeRef>ExclusiveGateway_0fj9kmh</bpmn:flowNodeRef>
@@ -25,11 +25,10 @@
         <bpmn:flowNodeRef>TweetAnfrageBehandelt</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
-    <bpmn:sequenceFlow id="SequenceFlow_1vqcip2" sourceRef="TweetAnfrageEingereicht" targetRef="MitarbeiterKuerzelExtrahieren" />
+    <bpmn:sequenceFlow id="SequenceFlow_1vqcip2" sourceRef="TweetAnfrageEingereicht" targetRef="BenutzerInformationenAuslesen" />
     <bpmn:startEvent id="TweetAnfrageEingereicht" name="Tweet-Anfrage&#10;eingereicht" camunda:initiator="anfrageStellenderBenutzer">
       <bpmn:extensionElements>
         <camunda:formData>
-          <camunda:formField id="email" label="E-Mail" type="string" />
           <camunda:formField id="tweetContent" label="Zu veröffentlichender Text" type="string" />
         </camunda:formData>
       </bpmn:extensionElements>
@@ -43,7 +42,7 @@
     <bpmn:userTask id="TweetAnfragePruefen" name="Tweet-Anfrage prüfen" camunda:candidateGroups="Kommunikationsabteilung">
       <bpmn:extensionElements>
         <camunda:formData>
-          <camunda:formField id="alias" label="Kürzel" type="string" />
+          <camunda:formField id="firstName" label="Vorname des Mitarbeiters" type="string" />
           <camunda:formField id="tweetContent" label="Zu veröffentlichender Text" type="string" />
           <camunda:formField id="checkResult" label="Prüfergebni" type="enum">
             <camunda:value id="accepted" name="Genehmigt" />
@@ -59,14 +58,7 @@
     <bpmn:sequenceFlow id="SequenceFlow_002ptgj" sourceRef="TweetAnfrageberarbeiten" targetRef="ExclusiveGateway_1qa6x80" />
     <bpmn:sequenceFlow id="SequenceFlow_0glyf4v" sourceRef="ExclusiveGateway_1qa6x80" targetRef="TweetAnfragePruefen" />
     <bpmn:sequenceFlow id="SequenceFlow_1rlwf8z" sourceRef="TweetAnfragePruefen" targetRef="Pruefergebnis" />
-    <bpmn:sequenceFlow id="SequenceFlow_1nms2zv" sourceRef="MitarbeiterKuerzelExtrahieren" targetRef="ExclusiveGateway_1qa6x80" />
-    <bpmn:scriptTask id="MitarbeiterKuerzelExtrahieren" name="Mitarbeiter-Kürzel extrahieren" scriptFormat="JavaScript">
-      <bpmn:incoming>SequenceFlow_1vqcip2</bpmn:incoming>
-      <bpmn:outgoing>SequenceFlow_1nms2zv</bpmn:outgoing>
-      <bpmn:script>emailAdress = execution.getVariable("email");
-var alias = emailAdress.substring(0,4);
-execution.setVariable("alias",alias);</bpmn:script>
-    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="SequenceFlow_1nms2zv" sourceRef="BenutzerInformationenAuslesen" targetRef="ExclusiveGateway_1qa6x80" />
     <bpmn:boundaryEvent id="DreiTageAbgelaufenKommunikationsabteilung" name="3 Tage abgelaufen" attachedToRef="TweetAnfragePruefen">
       <bpmn:extensionElements>
         <camunda:executionListener event="end">
@@ -144,6 +136,10 @@ execution.setVariable("alias",alias);</bpmn:script>
         <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT10S</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="BenutzerInformationenAuslesen" name="Benutzer-Informationen auslesen" camunda:delegateExpression="#{getUserInformationAdapter}">
+      <bpmn:incoming>SequenceFlow_1vqcip2</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1nms2zv</bpmn:outgoing>
+    </bpmn:serviceTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1y44tdo">
@@ -250,9 +246,6 @@ execution.setVariable("alias",alias);</bpmn:script>
         <di:waypoint x="242" y="212" />
         <di:waypoint x="303" y="212" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="ScriptTask_0pf0cgg_di" bpmnElement="MitarbeiterKuerzelExtrahieren">
-        <dc:Bounds x="142" y="172" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ServiceTask_1kirtou_di" bpmnElement="TweetSenden">
         <dc:Bounds x="721" y="474" width="100" height="80" />
       </bpmndi:BPMNShape>
@@ -284,6 +277,9 @@ execution.setVariable("alias",alias);</bpmn:script>
         <di:waypoint x="933" y="436" />
         <di:waypoint x="911" y="411" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1nixbyh_di" bpmnElement="BenutzerInformationenAuslesen">
+        <dc:Bounds x="142" y="172" width="100" height="80" />
+      </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>
